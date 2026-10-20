@@ -1,18 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 const splashImage = require('../../assets/images/splash-screen.png');
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { status } = useAuth();
+  const [tempoMinimoPassou, setTempoMinimoPassou] = useState(false);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      router.replace('./welcome');
-    }, 2500);
+    const timeout = setTimeout(() => setTempoMinimoPassou(true), 2500);
     return () => clearTimeout(timeout);
-  }, [router]);
+  }, []);
+
+  // Sai quando a imagem já foi exibida E a sessão salva já foi verificada;
+  // o index decide entre home (logado) e welcome (deslogado).
+  useEffect(() => {
+    if (tempoMinimoPassou && status !== 'carregando') {
+      router.replace('/');
+    }
+  }, [tempoMinimoPassou, status, router]);
 
   return (
     <View style={styles.container}>

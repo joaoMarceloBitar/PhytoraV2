@@ -32,13 +32,13 @@ export default function WelcomeScreen() {
         <Button
           title="Cadastre-se"
           variant="ghost"
-          onPress={() => {}}
+          onPress={() => router.push('/register')}
         />
 
         <Button
           title="Já tenho uma conta"
           variant="text"
-          onPress={() => {}}
+          onPress={() => router.push('/login')}
         />
         </ThemedView>
     </ThemedView>

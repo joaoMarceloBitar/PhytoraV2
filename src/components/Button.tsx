@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, ViewStyle, } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle, } from 'react-native';
 import { ReactNode } from 'react';
 
 type ButtonProps = {
@@ -10,9 +10,14 @@ type ButtonProps = {
   style?: ViewStyle;
 
   icon?: ReactNode;
+
+  /** Mostra um indicador no lugar do texto e bloqueia novos toques. */
+  loading?: boolean;
+
+  disabled?: boolean;
 };
 
-export default function Button({ title, onPress, variant = 'default', style, icon, }: ButtonProps) {
+export default function Button({ title, onPress, variant = 'default', style, icon, loading = false, disabled = false, }: ButtonProps) {
 
   function getButtonStyle() {
 
@@ -46,19 +51,30 @@ export default function Button({ title, onPress, variant = 'default', style, ico
 
   return (
     <Pressable
-      style={[getButtonStyle(), style]}
+      style={[getButtonStyle(), (disabled || loading) && styles.inactive, style]}
       onPress={onPress}
+      disabled={disabled || loading}
     >
-      {icon}
+      {loading ? (
+        <ActivityIndicator color={getTextStyle().color} />
+      ) : (
+        <>
+          {icon}
 
-      <Text style={getTextStyle()}>
-        {title}
-      </Text>
+          <Text style={getTextStyle()}>
+            {title}
+          </Text>
+        </>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+
+  inactive: {
+    opacity: 0.6,
+  },
 
   button: {
     paddingVertical: 14,

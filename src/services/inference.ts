@@ -1,5 +1,7 @@
 import { File } from "expo-file-system";
 
+import { API_URL } from "@/config/api";
+
 export interface DiagnosisPrediction {
     class: string;
     confidence: number;
@@ -13,8 +15,6 @@ export interface DiagnosticResponse {
     predictedIndex: number;
     topPredictions: DiagnosisPrediction[];
 }
-
-const API_URL = "http://10.0.2.2:3080";
 
 export async function inferImage(uri: string): Promise<DiagnosticResponse> {
 

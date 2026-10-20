@@ -3,4 +3,5 @@ export const COLORS = {
   background: '#2C473E',
   textLight: '#D9D9D9',
   white: '#FFFFFF',
+  error: '#FFB4A8',
 };

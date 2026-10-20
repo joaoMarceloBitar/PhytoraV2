@@ -150,6 +150,21 @@ Cada etapa é testável isoladamente antes de seguir para a próxima:
 8. Integração com a API do INMET + lógica de cálculo de zona de risco
 9. Sistema de notificações (geração no backend + `expo-notifications` no app)
 
+## 5.1 Decisões tomadas durante a implementação
+
+Registradas aqui só as que dizem respeito ao app; as da API estão no `docs/v2-proposta.md` do repositório `PhytoraAPI`.
+
+### Etapa 2 — Autenticação (lado do app)
+
+- **Modo convidado mantido**: a "Análise Rápida" continua acessível sem conta — diagnostica, mas não salva nada nem aparece no mapa. Telas de `welcome`/`login`/`register` só existem para quem está deslogado; `home` só para quem está logado (`Stack.Protected` do expo-router).
+- **Persistência da conta no aparelho**: o refresh token, o perfil (`nome`, `email`) e um `device_id` ficam no `expo-secure-store` (cifrado pelo Android Keystore, apagado ao desinstalar). O access token fica **só em memória**.
+- **Abertura do app sem esperar a rede**: com sessão salva, o app entra logado na hora usando o perfil em cache e confirma com a API em segundo plano. Sem internet, continua logado; só um 401 de verdade (sessão expirada ou revogada) leva de volta ao login.
+- **Um refresh por vez**: o cliente HTTP (`src/services/api.ts`) faz todas as requisições que receberem 401 ao mesmo tempo esperarem o mesmo refresh. Dois refreshes com o mesmo token fariam a API tratá-lo como roubado e derrubar a sessão.
+- **`device_id` é um UUID gerado na primeira abertura** (via `expo-crypto`), não o ID de hardware do Android — sem permissão extra nem questão de privacidade. Sobrevive ao logout: identifica o aparelho, não a conta.
+- **URL da API configurável** por `EXPO_PUBLIC_API_URL` no `.env` (ver `.env.example`); o padrão continua `http://10.0.2.2:3080` (emulador Android).
+- **Splash espera a sessão**: além dos 2,5s de imagem, aguarda a verificação da sessão salva; o `index` decide entre `home` e `welcome`.
+- **Adiado**: desbloqueio por biometria (`expo-local-authentication`), evolução natural da persistência.
+
 ## 6. Perguntas em aberto
 
 Nenhuma no momento. Pontos explicitamente adiados para depois (não bloqueiam esta versão): suporte a iOS, deploy em nuvem, logout de todos os dispositivos, storage em S3/R2, modelo de ML para risco.
