@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -7,18 +6,12 @@ import Button from '@/components/Button';
 import { COLORS } from '@/constants/colors';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Tela inicial de quem está logado. Por enquanto só a análise e o logout;
-// terrenos (etapa 4) e o mapa (etapa 7) entram aqui.
-export default function HomeScreen() {
+// Aba Diagnosticar (centro). "Diagnosticar e salvar" vira registro no mapa;
+// a Análise Rápida continua disponível para testar sem salvar.
+// Ainda no visual antigo: migrar para o design system (docs/design-system.md).
+export default function DiagnosticarScreen() {
   const router = useRouter();
-  const { usuario, sair } = useAuth();
-  const [saindo, setSaindo] = useState(false);
-
-  async function confirmarSaida() {
-    setSaindo(true);
-    // Ao deslogar, o guard do layout tira o usuário desta tela sozinho.
-    await sair();
-  }
+  const { usuario } = useAuth();
 
   return (
     <View style={styles.container}>
@@ -29,12 +22,15 @@ export default function HomeScreen() {
 
       <View style={styles.buttonContainer}>
         <Button
-          title="Análise Rápida"
+          title="Diagnosticar e salvar"
           icon={<CameraIcon width={24} height={24} />}
+          onPress={() => router.push('/diagnostico/escolher')}
+        />
+        <Button
+          title="Análise rápida (não salva)"
+          variant="ghost"
           onPress={() => router.push('/culture-selection')}
         />
-
-        <Button title="Sair" variant="text" onPress={confirmarSaida} loading={saindo} />
       </View>
     </View>
   );
@@ -72,6 +68,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
     width: '100%',
-    paddingHorizontal: 90,
+    paddingHorizontal: 48,
   },
 });

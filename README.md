@@ -195,6 +195,73 @@ O Phytora auxilia seus estudos fornecendo diagnósticos rápidos e informações
 
 ---
 
+## Como rodar (desenvolvimento)
+
+> **Guia completo de teste**, com os problemas conhecidos do ambiente (mapa em branco no emulador, iPhone no SDK 58, firewall): [`docs/como-testar.md`](docs/como-testar.md). **O que falta fazer**: [`docs/pendencias.md`](docs/pendencias.md).
+
+> **Por enquanto, use o Expo Go**: a migração para dev client (etapa 3 da v2) está em stand-by, e nenhum APK próprio foi compilado ainda. Rode `npm run start:go` e abra no Expo Go (emulador ou celular). O `npm start` sozinho espera o dev client instalado, porque o `expo-dev-client` já está no projeto. As instruções de dev client abaixo valem para quando a etapa for retomada.
+
+O app roda num **dev client**: um build de debug do próprio Phytora (`com.joaomarcelobitar.phytora`), com as bibliotecas nativas do projeto e as ferramentas de desenvolvimento do Expo. Só Android por enquanto.
+
+### Pré-requisitos
+
+- Node.js e `npm install` feito
+- Android Studio instalado (fornece o Android SDK, o emulador e o JDK que roda o Gradle)
+- **JDK 17 instalado**, além do que vem com o Android Studio: o plugin Gradle do React Native exige exatamente a versão 17 para se compilar. Não precisa ser o `JAVA_HOME`; o Gradle encontra sozinho na pasta padrão. No Windows: `winget install EclipseAdoptium.Temurin.17.JDK`
+- Um emulador Android com **pelo menos 4 GB de RAM** (com 2 GB ele pode não terminar o boot)
+- A [PhytoraAPI](https://github.com/joaoMarceloBitar/PhytoraAPIV2) rodando (`npm run dev` lá)
+- Opcional: copie `.env.example` para `.env` e ajuste `EXPO_PUBLIC_API_URL`. O padrão `http://10.0.2.2:3080` é o endereço do seu computador visto de dentro do emulador.
+
+### Primeira vez (ou depois de mudança nativa)
+
+```bash
+npm run android
+```
+
+Compila o APK, instala no emulador (ligue-o antes) e sobe o Metro. A primeira compilação demora (~10–20 min, baixa as dependências do Gradle); as seguintes são incrementais.
+
+O script usa o JDK que vem com o Android Studio, não o `JAVA_HOME` da máquina, que pode ser novo demais para o Gradle. Para forçar outro JDK, defina `PHYTORA_JAVA_HOME`.
+
+### Dia a dia
+
+```bash
+npm start
+```
+
+Abra o Phytora já instalado no emulador. Salvar um arquivo `.tsx` recarrega a tela; **não precisa recompilar**.
+
+### Quando recompilar
+
+Só quando algo **nativo** mudar:
+- instalou uma biblioteca com código nativo (ex: `expo-*`, `react-native-maps`);
+- mudou `app.json` (plugins, permissões, ícone, package).
+
+Nesses casos:
+
+```bash
+npm run android:prebuild   # regenera a pasta android/ a partir do app.json
+npm run android
+```
+
+A pasta `android/` é **gerada** e fica fora do git. Nunca edite nada lá dentro à mão: o próximo `android:prebuild` apaga. Toda configuração nativa vai no `app.json`.
+
+### Expo Go (iPhone)
+
+Enquanto o app não usar bibliotecas nativas fora do Expo Go, dá para abri-lo no Expo Go, inclusive num iPhone:
+
+```bash
+npm run start:go
+```
+
+No iPhone, `EXPO_PUBLIC_API_URL` precisa apontar para o IP do seu computador na rede (ex: `http://192.168.0.10:3080`).
+
+### Problemas conhecidos
+
+- **`PKIX path building failed` no build**: um antivírus com inspeção de HTTPS (ex: Avast → Escudo da Web → "Verificação HTTPS") está interceptando as conexões, e o Java não confia no certificado dele. Desative a inspeção de HTTPS durante o build.
+- **`JvmVendorSpec does not have member field ... IBM_SEMERU`**: falta o JDK 17. O Gradle tenta baixá-lo sozinho, e o plugin que faria isso (foojay 0.5.0, fixado pelo React Native) é incompatível com o Gradle 9. Instale o JDK 17 (ver pré-requisitos).
+
+---
+
 ## Tecnologias
 
 ### Mobile

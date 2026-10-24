@@ -11,7 +11,8 @@ type AuthContextValor = {
   status: Status;
   usuario: UsuarioOutput | null;
   entrar: (email: string, senha: string) => Promise<void>;
-  cadastrar: (nome: string, email: string, senha: string) => Promise<void>;
+  cadastrar: (nome: string, email: string, senha: string, modoAnonimo: boolean) => Promise<void>;
+  atualizarModoAnonimo: (modoAnonimo: boolean) => Promise<void>;
   sair: () => Promise<void>;
 };
 
@@ -22,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioOutput | null>(null);
 
   useEffect(() => {
-    // Se a API recusar o refresh (sessão expirada, revogada), volta para o login.
     aoSessaoEncerrada(() => {
       setUsuario(null);
       setStatus('deslogado');
@@ -31,11 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     restaurarSessao().catch(() => setStatus('deslogado'));
   }, []);
 
-  /**
-   * Abre o app já logado se houver sessão salva no aparelho. Entra na hora com
-   * o perfil em cache — sem esperar a rede, e funcionando offline — e confirma
-   * com a API em segundo plano. Só um 401 de verdade derruba a sessão.
-   */
   async function restaurarSessao() {
     const [refreshToken, usuarioSalvo] = await Promise.all([
       lerRefreshToken(),
@@ -49,9 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUsuario(usuarioSalvo);
     setStatus('logado');
-
-    // /auth/me força o refresh (não há access token em memória ainda) e
-    // atualiza o nome em cache. Erro de rede é ignorado: segue offline.
     authService
       .buscarPerfil()
       .then(setUsuario)
@@ -63,9 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('logado');
   }
 
-  async function cadastrar(nome: string, email: string, senha: string) {
-    setUsuario(await authService.registrar(nome, email, senha));
+  async function cadastrar(nome: string, email: string, senha: string, modoAnonimo: boolean) {
+    setUsuario(await authService.registrar(nome, email, senha, modoAnonimo));
     setStatus('logado');
+  }
+
+  async function atualizarModoAnonimo(modoAnonimo: boolean) {
+    setUsuario(await authService.atualizarModoAnonimo(modoAnonimo));
   }
 
   async function sair() {
@@ -75,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ status, usuario, entrar, cadastrar, sair }}>
+    <AuthContext.Provider value={{ status, usuario, entrar, cadastrar, atualizarModoAnonimo, sair }}>
       {children}
     </AuthContext.Provider>
   );

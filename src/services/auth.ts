@@ -20,10 +20,11 @@ export async function registrar(
   nome: string,
   email: string,
   senha: string,
+  modoAnonimo: boolean,
 ): Promise<UsuarioOutput> {
   const resultado = await requisicao<AuthOutput>('/auth/registrar', {
     method: 'POST',
-    body: { nome, email, senha, device_id: await obterDeviceId() },
+    body: { nome, email, senha, device_id: await obterDeviceId(), modo_anonimo: modoAnonimo },
   });
   return guardarSessao(resultado);
 }
@@ -55,6 +56,17 @@ export async function logout(): Promise<void> {
 
 export async function buscarPerfil(): Promise<UsuarioOutput> {
   const usuario = await requisicao<UsuarioOutput>('/auth/me', { autenticado: true });
+  await salvarUsuario(usuario);
+  return usuario;
+}
+
+/** Liga ou desliga o modo anônimo. Vale para todos os diagnósticos da conta. */
+export async function atualizarModoAnonimo(modoAnonimo: boolean): Promise<UsuarioOutput> {
+  const usuario = await requisicao<UsuarioOutput>('/auth/me', {
+    method: 'PATCH',
+    body: { modo_anonimo: modoAnonimo },
+    autenticado: true,
+  });
   await salvarUsuario(usuario);
   return usuario;
 }

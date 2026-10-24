@@ -49,14 +49,22 @@ type Opcoes = {
 
 async function executar(caminho: string, opcoes: Opcoes): Promise<Response> {
   const headers: Record<string, string> = {};
-  if (opcoes.body !== undefined) headers['Content-Type'] = 'application/json';
+  // FormData (upload de foto) vai como está: o fetch monta o multipart e o
+  // Content-Type com o boundary. Ele pode ser reenviado depois de um refresh,
+  // porque guarda só a referência ao arquivo, não o conteúdo lido.
+  const multipart = opcoes.body instanceof FormData;
+  if (opcoes.body !== undefined && !multipart) headers['Content-Type'] = 'application/json';
   if (opcoes.autenticado && accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
   try {
     return await fetch(`${API_URL}${caminho}`, {
       method: opcoes.method ?? 'GET',
       headers,
-      body: opcoes.body !== undefined ? JSON.stringify(opcoes.body) : undefined,
+      body: multipart
+        ? (opcoes.body as FormData)
+        : opcoes.body !== undefined
+          ? JSON.stringify(opcoes.body)
+          : undefined,
     });
   } catch {
     throw new ErroRede();

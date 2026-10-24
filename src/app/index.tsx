@@ -7,6 +7,6 @@ export default function Index() {
   const { status } = useAuth();
 
   if (status === 'carregando') return <Redirect href="/splash" />;
-  if (status === 'logado') return <Redirect href="/home" />;
+  if (status === 'logado') return <Redirect href="/mapa" />;
   return <Redirect href="/welcome" />;
 }

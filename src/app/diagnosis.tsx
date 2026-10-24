@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import type { DiagnosticResponse } from "../services/inference";
 import { useRouter } from "expo-router";
 import Button from "@/components/Button";
+import type { RegistroOutput } from "@/types/api";
 
 type DiseaseProfile = {
     key: string;
@@ -85,9 +86,34 @@ function formatConfidence(value: number): string {
 export default function Diagnostico() {
     const router = useRouter();
 
-    const { diagnosis } = useLocalSearchParams();
+    // `diagnosis`: Análise Rápida (/infer, não salva).
+    // `registro`: diagnóstico salvo (POST /registros), com o mesmo resultado da CNN.
+    const { diagnosis, registro: registroParam } = useLocalSearchParams();
+
+    const registro: RegistroOutput | null = (() => {
+        if (typeof registroParam !== "string") return null;
+        try {
+            return JSON.parse(registroParam) as RegistroOutput;
+        } catch {
+            return null;
+        }
+    })();
 
     const result: DiagnosticResponse | null = (() => {
+        if (registro) {
+            return {
+                ok: true,
+                predictedClass: registro.classe_modelo,
+                predictedIndex: -1,
+                confidence: registro.confianca,
+                topPredictions: registro.top_predicoes.map((p, index) => ({
+                    class: p.classe,
+                    confidence: p.confianca,
+                    index,
+                })),
+            };
+        }
+
         if (typeof diagnosis !== "string") {
             return null;
         }
@@ -106,6 +132,18 @@ export default function Diagnostico() {
             <View style={[styles.hero]}>
                 <Text style={styles.pageTittle}>Diagnóstico</Text>
             </View>
+            {registro && (
+                <View style={styles.salvo}>
+                    <Text style={styles.salvoTitulo}>
+                        {registro.inconclusivo ? "Salvo como inconclusivo" : "Salvo nos seus diagnósticos"}
+                    </Text>
+                    <Text style={styles.salvoTexto}>
+                        {registro.inconclusivo
+                            ? "A confiança do modelo ficou baixa. O diagnóstico fica no seu histórico, mas não aparece no mapa da região nem entra nos alertas. Tente outra foto, mais de perto e com boa luz."
+                            : `${registro.doenca?.nome ?? "Folha saudável"} · ${registro.municipio ? `${registro.municipio.nome}/${registro.municipio.uf}` : "município não identificado"}`}
+                    </Text>
+                </View>
+            )}
             <View style={[styles.pathologyCard, { backgroundColor: "#ff793b" }]}>
                 <Text style={styles.badge}>{profile.badge}</Text>
                 <Text style={styles.title}>{profile.title}</Text>
@@ -144,16 +182,60 @@ export default function Diagnostico() {
                     </View>
                 ))}
             </View>
-            <Button
-                title="Voltar para a tela inicial"
-                variant="text"
-                onPress={() => router.push('./welcome')}
-            />
+            {registro ? (
+                <View style={styles.acoes}>
+                    <Button
+                        title="Diagnosticar outra"
+                        onPress={() => router.back()}
+                    />
+                    <Button
+                        title="Ver no terreno"
+                        variant="text"
+                        onPress={() =>
+                            router.dismissTo({ pathname: "/terreno/[id]", params: { id: registro.id_terreno } })
+                        }
+                    />
+                </View>
+            ) : (
+                <Button
+                    title="Voltar para a tela inicial"
+                    variant="text"
+                    // Volta para a primeira tela da pilha: welcome para convidado,
+                    // as abas para quem está logado.
+                    onPress={() => router.dismissAll()}
+                />
+            )}
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
+
+    salvo: {
+        marginHorizontal: 18,
+        marginTop: 16,
+        padding: 14,
+        borderRadius: 14,
+        backgroundColor: "#DCEFE5",
+        gap: 4,
+    },
+
+    salvoTitulo: {
+        color: "#1D6A50",
+        fontSize: 15,
+        fontWeight: "700",
+    },
+
+    salvoTexto: {
+        color: "#2C473E",
+        fontSize: 14,
+        lineHeight: 20,
+    },
+
+    acoes: {
+        gap: 4,
+        paddingHorizontal: 18,
+    },
 
     container: {
         flexGrow: 1,

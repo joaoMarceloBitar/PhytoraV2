@@ -1,13 +1,11 @@
-import ArrozIcon from '@/assets/icons/arrozIcon.svg';
-import SojaIcon from '@/assets/icons/sojaIcon.svg';
-import TrigoIcon from '@/assets/icons/trigoIcon.svg';
-
 import {
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+
+import CulturaIcone from '@/components/CulturaIcone';
 
 type Props = {
   title: string;
@@ -20,25 +18,13 @@ export default function CultureCard({
   culture,
   onPress,
 }: Props) {
-  const normalizedTitle = (culture ?? title).toLowerCase();
-
-  const IconComponent = normalizedTitle.includes('soja')
-    ? SojaIcon
-    : normalizedTitle.includes('arroz')
-      ? ArrozIcon
-      : normalizedTitle.includes('trigo')
-        ? TrigoIcon
-        : normalizedTitle.includes('milho')
-          ? TrigoIcon
-          : SojaIcon;
-
   return (
     <Pressable
       style={styles.card}
       onPress={onPress}
     >
       <View style={styles.content}>
-        <IconComponent width={48} height={48} />
+        <CulturaIcone cultura={culture ?? title} tamanho={48} />
 
         <Text style={styles.title}>
           {title}
